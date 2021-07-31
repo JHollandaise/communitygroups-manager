@@ -97,3 +97,4 @@ function cg_update_posts() {
     
 
 }
+add_action('wp_loaded','cg_update_posts');
