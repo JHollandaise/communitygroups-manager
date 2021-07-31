@@ -75,6 +75,10 @@ function cg_update_posts() {
         if($response_code!=200)
             throw new Exception("bad response code: " . $response_code);
         $group = json_decode(wp_remote_retrieve_body($group),TRUE);
+        $days = ["Monday", "Teusday", "Wednesday", "Thursday", "Friday",
+                "Saturday", "Sunday"];
+        $day_and_time = $group["frequency"] . " on " .
+                $days[intval($group["day"])-1] . " at " . $group["time"];
         $post_data = [
             'ID' => $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0,
             'post_title' => $group["name"],
@@ -85,7 +89,7 @@ function cg_update_posts() {
                 'cg_description' => $group["description"],
                 'cg_group_leaders' => $group["custom_fields"]["field85"]["value"],
                 'cg_date_start_to_end' => 'TODO dates',
-                'cg_day_and_time' => 'TODO day and time',
+                'cg_day_and_time' => $day_and_time,
                 'cg_location' => $group["location"]["name"],
                 'cg_minimum_age' => $group["custom_fields"]["field81"]["value"],
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
@@ -105,6 +109,4 @@ function remote_get_cached(string $url, array $headers, int $expiry) {
     $response = wp_remote_get($url, ['headers'=>$headers]);
     set_transient("GET: " . $url, $response, $expiry);
     return $response;
-}
-
 }
