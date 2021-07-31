@@ -98,8 +98,7 @@ function cg_update_posts() {
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"],
-                'fifu_image_url' => $group["images"]["lg"]["url"],
-                '_wp_attached_file' => $group["images"]["lg"]["url"]
+                 '_knawatfibu_url' => $group["images"]["lg"]["url"]
             ]
         ];
         wp_insert_post($post_data);
@@ -108,7 +107,7 @@ function cg_update_posts() {
     
 
 }
-add_action('after_setup_theme','cg_update_posts');
+add_action('init','cg_update_posts');
 
 function remote_get_cached(string $url, array $headers, int $expiry) {
     // TODO: add appropriate exception handling at this scope
