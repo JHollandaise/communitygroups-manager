@@ -97,7 +97,7 @@ function cg_update_posts() {
                 'cg_minimum_age' => $group["custom_fields"]["field81"]["value"],
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
-                'cg_cs_group_id' => $group["id"]
+                'cg_cs_group_id' => $group["id"],
                 '_knawatfibu_url' => $group["images"]["lg"]["url"];
             ]
         ];
