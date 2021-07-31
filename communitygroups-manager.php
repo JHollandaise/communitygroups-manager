@@ -98,7 +98,7 @@ function cg_update_posts() {
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"],
-                '_knawatfibu_url' => $group["images"]["lg"]["url"]
+                'fifu_image_url' => $group["images"]["lg"]["url"]
             ]
         ];
         wp_insert_post($post_data);
