@@ -70,7 +70,7 @@ function cg_update_posts() {
     foreach($relevant_cs_group_ids as $cs_group_id) {
         $group = remote_get_cached(CSAPI_ROOT_URL . 'group/'.$cs_group_id,
               $REQUEST_HEADERS,600);
-        if(is_wp_error($group)) throw new Exception("Failed to submit request group/". $cs_group_id);
+        if(is_wp_error($group)) throw new Exception("Failed to submit request: group/". $cs_group_id);
         $response_code = wp_remote_retrieve_response_code($group);
         if($response_code!=200)
             throw new Exception("bad response code: " . $response_code);
@@ -98,7 +98,7 @@ function cg_update_posts() {
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"],
-                '_knawatfibu_url' => $group["images"]["lg"]["url"];
+                '_knawatfibu_url' => $group["images"]["lg"]["url"]
             ]
         ];
         wp_insert_post($post_data);
@@ -110,6 +110,7 @@ function cg_update_posts() {
 add_action('after_setup_theme','cg_update_posts');
 
 function remote_get_cached(string $url, array $headers, int $expiry) {
+    // TODO: add appropriate exception handling at this scope
     if ($response = get_transient("GET: " . $url)) return $response;
     $response = wp_remote_get($url, ['headers'=>$headers]);
     set_transient("GET: " . $url, $response, $expiry);
