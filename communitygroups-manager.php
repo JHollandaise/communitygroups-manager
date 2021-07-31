@@ -78,7 +78,7 @@ function cg_update_posts() {
         $days = ["Monday", "Teusday", "Wednesday", "Thursday", "Friday",
                 "Saturday", "Sunday"];
         $day_and_time = $group["frequency"] . " on " .
-                $days[intval($group["day"])-1] . " at " . $group["time"];
+                $days[intval($group["day"])-1] . ($group["time"]!=""?" at " . $group["time"]:"");
         $post_data = [
             'ID' => $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0,
             'post_title' => $group["name"],
