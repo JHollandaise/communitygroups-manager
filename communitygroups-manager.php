@@ -75,6 +75,9 @@ function cg_update_posts() {
         if($response_code!=200)
             throw new Exception("bad response code: " . $response_code);
         $group = json_decode(wp_remote_retrieve_body($group),TRUE);
+
+
+
         $days = ["Monday", "Teusday", "Wednesday", "Thursday", "Friday",
                 "Saturday", "Sunday"];
         $day_and_time = $group["frequency"] . " on " .
@@ -95,9 +98,11 @@ function cg_update_posts() {
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"]
+                '_knawatfibu_url' => $group["images"]["lg"]["url"];
             ]
         ];
         wp_insert_post($post_data);
+
     }
     
 
