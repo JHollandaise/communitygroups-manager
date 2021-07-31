@@ -12,12 +12,13 @@
 
 define("CSAPI_ROOT_URL","https://api.churchsuite.co.uk/v1/smallgroups/");
 
-$REQUEST_HEADERS = [];
-$RELEVANT_CS_TAG = "CG2021-1";
-$POST_CATEGORY = "Community Groups";
 
 function cg_update_posts() {
-    $x_headers = json_decode(file_get_contents(dirname(__FILE__) . "/$filename"),
+    $REQUEST_HEADERS = [];
+    $RELEVANT_CS_TAG = "CG2021-1";
+    $POST_CATEGORY = "Community Groups";
+
+    $x_headers = json_decode(file_get_contents(dirname(__FILE__) . "/x_headers.json"),
                     true);
     foreach(array("X-Account", "X-Application", "X-Auth") as $header_name) {
         if(!array_key_exists($header_name, $x_headers)) {
@@ -32,34 +33,34 @@ function cg_update_posts() {
     $tags = wp_remote_get(CSAPI_ROOT_URL . "tags",
         ['headers' => $REQUEST_HEADERS]);
 
-    if(is_wp_error($tags)) throw new exception("Failed to submit request");
-    if(wp_remote_retrieve_response_code($tags)!=200)
-        throw new Exception("invalid response");
+    if(is_wp_error($tags)) throw new Exception("Failed to submit request");
+    $response_code = wp_remote_retrieve_response_code($tags); 
+    if($response_code != 200)
+        throw new Exception(" bad response code: " . $response_code);
 
-    $tags = json_decode(wp_remote_retrieve_body($tags));
-    $tag_name_to_id = array_map(function($x)
-                    {return $x["name"] => $x["id"];},
-                    $tags);
-    if (!array_key_exists($RELEVANT_CG_TAG, $tag_name_to_id))
-        throw new Exception("invalid RELEVANT_CS_TAG");
-    $relevant_tag_id = $tag_name_to_id[$RELEVANT_CG_TAG];
-
+    $tags = json_decode(wp_remote_retrieve_body($tags),TRUE)["tags"];
+    $tag_name_to_id = array_reduce($tags, function($result,$x)
+                    {$result[$x["name"]]=$x["id"];
+                    return $result;}, []);
+    if (!array_key_exists($RELEVANT_CS_TAG, $tag_name_to_id))
+        throw new Exception("invalid RELEVANT_CS_TAG: ". $RELEVANT_CS_TAG);
+    $relevant_tag_id = $tag_name_to_id[$RELEVANT_CS_TAG];
     $groups_to_tags = wp_remote_get(CSAPI_ROOT_URL . "groups_to_tags",
         ['headers' => $REQUEST_HEADERS]);
-    $groups_to_tags = json_decode(wp_remote_retrieve_body($groups_to_tags));
-    $relevant_groups_to_tags = array_filter($groups_to_tags, function($x)
-                    {return in_array($relevant_tag_id, $x);});
+    $groups_to_tags = json_decode(wp_remote_retrieve_body($groups_to_tags),TRUE);
+    $relevant_groups_to_tags = array_filter($groups_to_tags, function($x) use ($relevant_tag_id)
+                            {return in_array($relevant_tag_id, $x);});
 
     $relevant_cs_group_ids = array_keys($relevant_groups_to_tags);
-
     $relevant_wp_posts_ids = get_posts([
                             'fields'=>'ids',
                             'category'=>get_cat_ID($POST_CATEGORY)]);
     
-    $wp_post_id_to_cs_group_id = array_map(function($x)
-                            {return $x=>get_post_meta($x, 'cg_cs_group_id',
-                                TRUE);},
-                            $relevant_wp_post_ids);
+    $wp_post_id_to_cs_group_id = array_reduce($relevant_wp_posts_ids,
+                            function($result, $x)
+                            {$result[$x]=get_post_meta($x, 'cg_cs_group_id',
+                                TRUE);
+                            return $result;},[]);
     $wp_posts_to_remove = array_diff($wp_post_id_to_cs_group_id,
                         $relevant_cs_group_ids);
     foreach($wp_posts_to_remove as $post_id => $_) {
@@ -67,13 +68,14 @@ function cg_update_posts() {
     }
     
     $cs_group_id_to_wp_post_id = array_flip($wp_post_id_to_cs_group_id);
-    foreach($relevant_cs_group_ids $cs_group_id) {
-        $group = wp_remote_get(CSAPI_ROOT_URL . 'group/'.$cs_group_id);
-        if(is_wp_error($group) throw new exception("Failed to submit request");
-        if(wp_remote_retrieve_response_code($group)!=200)
-            throw new Exception("invalid response, check request");
-        $group = json_decode(wp_remote_retrieve_body($group));
-
+    foreach($relevant_cs_group_ids as $cs_group_id) {
+        $group = wp_remote_get(CSAPI_ROOT_URL . 'group/'.$cs_group_id,
+            ['headers' => $REQUEST_HEADERS]);
+        if(is_wp_error($group)) throw new Exception("Failed to submit request group/". $cs_group_id);
+        $response_code = wp_remote_retrieve_response_code($group);
+        if($response_code!=200)
+            throw new Exception(" bad response code: " . $response_code);
+        $group = json_decode(wp_remote_retrieve_body($group),TRUE);
         $post_data = [
             'ID' => $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0,
             'post_title' => $group["name"],
@@ -91,7 +93,7 @@ function cg_update_posts() {
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"]
             ]
-        ]
+        ];
         wp_insert_post($post_data);
     }
     
