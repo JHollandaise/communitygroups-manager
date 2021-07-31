@@ -107,12 +107,4 @@ function remote_get_cached(string $url, array $headers, int $expiry) {
     return $response;
 }
 
-function update_post_cached($post_data) {
-    if (get_transient("cg_post: ".$post_data['meta_input']['cg_cs_group_id'])!=
-            $post_data) {
-
-        wp_insert_post($post_data);
-        set_transient("cg_post: ".$post_data['meta_input']['cg_cs_group_id'],
-                $post_data);
-    }
 }
