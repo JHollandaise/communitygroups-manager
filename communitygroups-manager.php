@@ -49,6 +49,8 @@ function cg_update_posts() {
     $groups_to_tags = json_decode(wp_remote_retrieve_body($groups_to_tags),TRUE);
     $relevant_groups_to_tags = array_filter($groups_to_tags, function($x) use ($relevant_tag_id)
                             {return in_array($relevant_tag_id, $x);});
+    // Seeing group[id]==0 for some reason, remove it here
+    unset($relevant_groups_to_tags["0"];
 
     $relevant_cs_group_ids = array_keys($relevant_groups_to_tags);
     $relevant_wp_posts_ids = get_posts([
