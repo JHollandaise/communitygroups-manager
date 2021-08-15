@@ -80,7 +80,7 @@ function cg_update_posts() {
 
 
 
-        $days = ["Monday", "Teusday", "Wednesday", "Thursday", "Friday",
+        $days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                 "Saturday", "Sunday"];
         $day_and_time = $group["frequency"] . " on " .
                 $days[intval($group["day"])-1] . ($group["time"]!=""?" at " . $group["time"]:"");
