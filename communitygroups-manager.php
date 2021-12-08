@@ -15,7 +15,7 @@ define("CSAPI_ROOT_URL","https://api.churchsuite.co.uk/v1/smallgroups/");
 
 function cg_update_posts() {
     $REQUEST_HEADERS = [];
-    $RELEVANT_CS_TAG = "CG2021-1";
+    $RELEVANT_CS_TAG = "CG2021-2";
     $POST_CATEGORY = "Community Groups";
 
     $x_headers = json_decode(file_get_contents(dirname(__FILE__) . "/x_headers.json"),
@@ -101,7 +101,8 @@ function cg_update_posts() {
                 'cg_objective' => $group["custom_fields"]["field79"]["value"],
                 'cg_signup_capacity' => $group["signup_capacity"],
                 'cg_cs_group_id' => $group["id"],
-                 '_knawatfibu_url' => $group["images"]["lg"]["url"]
+                'cg_signup_url' => "https://allnations.churchsuite.co.uk/groups/" . $group["identifier"],
+                '_knawatfibu_url' => $group["images"]["lg"]["url"]
             ]
         ];
         wp_insert_post($post_data);
