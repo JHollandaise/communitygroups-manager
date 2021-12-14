@@ -79,11 +79,12 @@ function cg_update_posts() {
         $group = json_decode(wp_remote_retrieve_body($group),TRUE);
 
 
-
         $days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                 "Saturday", "Sunday"];
         $day_and_time = $group["frequency"] . " on " .
                 $days[intval($group["day"])-1] . ($group["time"]!=""?" at " . $group["time"]:"");
+        // edge-case for custom event frequency (JH - 14/12/21)
+        if ($group["frequency"]=="custom") $day_and_time = $group["custom_frequency"];
         if($group["signup_capacity"]=="") $group["signup_capacity"]="N/A";
         $post_data = [
             'ID' => $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0,
