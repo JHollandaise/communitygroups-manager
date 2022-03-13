@@ -30,6 +30,7 @@ function cg_update_posts() {
         ["Content_Type" => "application/json"]);
 
     
+    // --- GET RELEVANT GROUP/POST IDS FROM CHURCHSUITE ---
     $tags = remote_get_cached(CSAPI_ROOT_URL . "tags", $REQUEST_HEADERS, 600);
 
     if(is_wp_error($tags)) throw new Exception("Failed to submit request");
@@ -53,6 +54,7 @@ function cg_update_posts() {
     unset($relevant_groups_to_tags["0"]);
 
     $relevant_cs_group_ids = array_keys($relevant_groups_to_tags);
+    // relevant posts are those under the category $POST_CATEGORY
     $relevant_wp_posts_ids = get_posts([
                             'numberposts'=>'50',
                             'fields'=>'ids',
@@ -62,6 +64,8 @@ function cg_update_posts() {
                             {$result[$x]=get_post_meta($x, 'cg_cs_group_id',
                                 TRUE);
                             return $result;},[]);
+    // ----------------------------------------------------
+
     $wp_posts_to_remove = array_diff($wp_post_id_to_cs_group_id,
                         $relevant_cs_group_ids);
     foreach($wp_posts_to_remove as $post_id => $_) {
@@ -86,8 +90,9 @@ function cg_update_posts() {
         // edge-case for custom event frequency (JH - 14/12/21)
         if ($group["frequency"]=="custom") $day_and_time = $group["custom_frequency"];
         if($group["signup_capacity"]=="") $group["signup_capacity"]="N/A";
+        $post_id = $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0;
         $post_data = [
-            'ID' => $cs_group_id_to_wp_post_id[$cs_group_id] ?? 0,
+            'ID' => $post_id,
             'post_title' => $group["name"],
             'post_status' => 'publish',
             'post_author' => 1,
@@ -106,7 +111,15 @@ function cg_update_posts() {
                 '_knawatfibu_url' => $group["images"]["lg"]["url"]
             ]
         ];
-        wp_insert_post($post_data);
+
+        // hash $post_data and save as meta_input for difference evaluation
+
+        $post_data_hash = hash("md5", serialize($post_data));
+        $post_data['meta_input']['post_data_hash'] = $post_data_hash;
+
+        // if we see a difference in post_data, then update
+        if(get_post_meta($post_id, 'post_data_hash') != $post_data_hash)
+            wp_insert_post($post_data);
 
     }
     
