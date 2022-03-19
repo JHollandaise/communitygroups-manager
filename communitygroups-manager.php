@@ -26,8 +26,9 @@ function cg_update_posts() {
                 "Missing $header_name in x_headers.json");
         }
     }
+    
     $REQUEST_HEADERS =  array_merge($x_headers,
-        ["Content_Type" => "application/json"]);
+        ["Content-Type" => "application/json"]);
 
     
     // --- GET RELEVANT GROUP/POST IDS FROM CHURCHSUITE ---
@@ -36,7 +37,7 @@ function cg_update_posts() {
     if(is_wp_error($tags)) throw new Exception("Failed to submit request");
     $response_code = wp_remote_retrieve_response_code($tags); 
     if($response_code != 200)
-        throw new Exception("bad response code: " . $response_code);
+        throw new Exception("bad response code: " . $response_code . " with x_headers: " . json_encode($REQUEST_HEADERS));
 
     $tags = json_decode(wp_remote_retrieve_body($tags),TRUE)["tags"];
     $tag_name_to_id = array_reduce($tags, function($result,$x)
@@ -71,7 +72,6 @@ function cg_update_posts() {
     foreach($wp_posts_to_remove as $post_id => $_) {
         wp_delete_post($post_id);
     }
-    
     $cs_group_id_to_wp_post_id = array_flip($wp_post_id_to_cs_group_id);
     foreach($relevant_cs_group_ids as $cs_group_id) {
         $group = remote_get_cached(CSAPI_ROOT_URL . 'group/'.$cs_group_id,
@@ -118,7 +118,8 @@ function cg_update_posts() {
         $post_data['meta_input']['post_data_hash'] = $post_data_hash;
 
         // if we see a difference in post_data, then update
-        if(get_post_meta($post_id, 'post_data_hash') != $post_data_hash)
+        if(get_post_meta($post_id, 'post_data_hash', true) != $post_data_hash)
+            
             wp_insert_post($post_data);
 
     }
@@ -129,7 +130,7 @@ add_action('init','cg_update_posts');
 
 function remote_get_cached(string $url, array $headers, int $expiry) {
     // TODO: add appropriate exception handling at this scope
-    if ($response = get_transient("GET: " . $url)) return $response;
+    if ($response = get_transient("GET: " . $url) and $expiry!=0) return $response;
     $response = wp_remote_get($url, ['headers'=>$headers]);
     set_transient("GET: " . $url, $response, $expiry);
     return $response;
